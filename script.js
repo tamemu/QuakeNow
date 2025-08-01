@@ -1,14 +1,17 @@
 const earthquakeListElement = document.getElementById('earthquake-list');
 
-// APIのエンドポイント (最新の地震情報)
-const apiEndpoint = 'https://www.data.jma.go.jp/developer/json/eq_earlywarning/current.json';
+// APIのエンドポイント (XML形式)
+const apiEndpoint = 'https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml';
 
 function fetchEarthquakes() {
   fetch(apiEndpoint)
-    .then(response => response.json())
-    .then(data => {
+    .then(response => response.text()) // XMLとしてテキストを取得
+    .then(xmlString => {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlString, 'application/xml');
+
       // データの処理と表示
-      displayEarthquakes(data);
+      displayEarthquakes(xmlDoc);
     })
     .catch(error => {
       console.error('データ取得エラー:', error);
@@ -16,30 +19,44 @@ function fetchEarthquakes() {
     });
 }
 
-function displayEarthquakes(data) {
+function displayEarthquakes(xmlDoc) {
   earthquakeListElement.innerHTML = ''; // 既存の地震情報をクリア
 
-  if (data && data.result && data.result.length > 0) {
-    data.result.forEach(earthquake => {
-      const earthquakeItem = document.createElement('div');
-      earthquakeItem.classList.add('earthquake-item');
+  const earthquakeItems = xmlDoc.querySelectorAll('eq'); // eq要素を全て選択
 
-      let message = `発生日時: ${new Date(earthquake.created)}<br>`;
-      message += `震源地: ${earthquake.location}<br>`;
-      message += `マグニチュード: ${earthquake.magnitude}<br>`;
+  if (earthquakeItems && earthquakeItems.length > 0) {
+    earthquakeItems.forEach(earthquakeItem => {
+      const itemDiv = document.createElement('div');
+      itemDiv.classList.add('earthquake-item');
 
-      if (earthquake.intensity) {
-        message += `最大震度: ${earthquake.intensity} (${earthquake.intensityType})<br>`;
+      const timeElement = earthquakeItem.querySelector('time');
+      const locationElement = earthquakeItem.querySelector('location');
+      const magnitudeElement = earthquakeItem.querySelector('magnitude');
+      const intensityElement = earthquakeItem.querySelector('intensity'); // 震度情報
+
+      let message = "";
+      if (timeElement) {
+        message += `発生日時: ${new Date(timeElement.textContent)}<br>`;
+      }
+      if (locationElement) {
+        message += `震源地: ${locationElement.textContent}<br>`;
+      }
+      if (magnitudeElement) {
+        message += `マグニチュード: ${magnitudeElement.textContent}<br>`;
       }
 
-      earthquakeItem.innerHTML = message;
-      earthquakeListElement.appendChild(earthquakeItem);
+      if(intensityElement){
+          message += `最大震度: ${intensityElement.textContent}<br>`
+      }
+
+
+      itemDiv.innerHTML = message;
+      earthquakeListElement.appendChild(itemDiv);
     });
   } else {
     earthquakeListElement.innerHTML = '<p>地震情報はありません。</p>';
   }
 }
-
 
 // 初回読み込みと定期的な更新
 fetchEarthquakes();
