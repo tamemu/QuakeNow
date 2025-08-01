@@ -25,34 +25,36 @@ function displayEarthquakes(xmlDoc) {
   const earthquakeItems = xmlDoc.querySelectorAll('eq'); // eq要素を全て選択
 
   if (earthquakeItems && earthquakeItems.length > 0) {
+    // テーブルの作成
+    const table = document.createElement('table');
+    table.classList.add('earthquake-table');
+
+    // テーブルヘッダーの作成
+    const thead = table.createTHead();
+    const headerRow = thead.insertRow();
+    headerRow.insertCell().textContent = '発生日時';
+    headerRow.insertCell().textContent = '震源地';
+    headerRow.insertCell().textContent = 'マグニチュード';
+    headerRow.insertCell().textContent = '最大震度';
+
+    // テーブルボディの作成
+    const tbody = table.createTBody();
+
     earthquakeItems.forEach(earthquakeItem => {
-      const itemDiv = document.createElement('div');
-      itemDiv.classList.add('earthquake-item');
+      const row = tbody.insertRow();
 
       const timeElement = earthquakeItem.querySelector('time');
       const locationElement = earthquakeItem.querySelector('location');
       const magnitudeElement = earthquakeItem.querySelector('magnitude');
       const intensityElement = earthquakeItem.querySelector('intensity'); // 震度情報
 
-      let message = "";
-      if (timeElement) {
-        message += `発生日時: ${new Date(timeElement.textContent)}<br>`;
-      }
-      if (locationElement) {
-        message += `震源地: ${locationElement.textContent}<br>`;
-      }
-      if (magnitudeElement) {
-        message += `マグニチュード: ${magnitudeElement.textContent}<br>`;
-      }
-
-      if(intensityElement){
-          message += `最大震度: ${intensityElement.textContent}<br>`
-      }
-
-
-      itemDiv.innerHTML = message;
-      earthquakeListElement.appendChild(itemDiv);
+      row.insertCell().textContent = timeElement ? new Date(timeElement.textContent) : '-';
+      row.insertCell().textContent = locationElement ? locationElement.textContent : '-';
+      row.insertCell().textContent = magnitudeElement ? magnitudeElement.textContent : '-';
+      row.insertCell().textContent = intensityElement ? intensityElement.textContent : '-';
     });
+
+    earthquakeListElement.appendChild(table);
   } else {
     earthquakeListElement.innerHTML = '<p>地震情報はありません。</p>';
   }
