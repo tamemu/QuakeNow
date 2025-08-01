@@ -1,15 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <title>地震速報</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>地震速報</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* カスタムスタイル (必要に応じて) */
+    .earthquake-card {
+      margin-bottom: 1rem;
+      border: 1px solid #deeplink;
+      border-radius: 0.25rem;
+    }
+    .earthquake-time {
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
+  </style>
 </head>
 <body>
-    <h1>地震速報</h1>
-    <div id="earthquake-list">
-        <!-- 地震情報がここに表示されます -->
-    </div>
 
-    <script src="script.js"></script>
+  <div class="container mt-3">
+    <h1>地震速報</h1>
+    <div id="earthquake-list" class="row">
+      <!-- 地震情報がここに表示されます -->
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (オプション) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <!-- JavaScriptファイル -->
+  <script src="script.js"></script>
 </body>
 </html>
