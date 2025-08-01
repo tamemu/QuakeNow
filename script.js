@@ -1,17 +1,14 @@
 const earthquakeListElement = document.getElementById('earthquake-list');
 
-// APIのエンドポイント (XML形式)
-const apiEndpoint = 'https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml';
+// APIのエンドポイント (JSON形式)
+const apiEndpoint = 'https://api.p2pquake.net/v2/jma/quake';
 
 function fetchEarthquakes() {
   fetch(apiEndpoint)
-    .then(response => response.text()) // XMLとしてテキストを取得
-    .then(xmlString => {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlString, 'application/xml');
-
+    .then(response => response.json()) // JSONとしてデータを取得
+    .then(data => {
       // データの処理と表示
-      displayEarthquakes(xmlDoc);
+      displayEarthquakes(data);
     })
     .catch(error => {
       console.error('データ取得エラー:', error);
@@ -19,12 +16,10 @@ function fetchEarthquakes() {
     });
 }
 
-function displayEarthquakes(xmlDoc) {
+function displayEarthquakes(data) {
   earthquakeListElement.innerHTML = ''; // 既存の地震情報をクリア
 
-  const earthquakeItems = xmlDoc.querySelectorAll('eq'); // eq要素を全て選択
-
-  if (earthquakeItems && earthquakeItems.length > 0) {
+  if (data && data.results && data.results.length > 0) {
     // テーブルの作成
     const table = document.createElement('table');
     table.classList.add('earthquake-table');
@@ -40,18 +35,13 @@ function displayEarthquakes(xmlDoc) {
     // テーブルボディの作成
     const tbody = table.createTBody();
 
-    earthquakeItems.forEach(earthquakeItem => {
+    data.results.forEach(earthquake => {
       const row = tbody.insertRow();
 
-      const timeElement = earthquakeItem.querySelector('time');
-      const locationElement = earthquakeItem.querySelector('location');
-      const magnitudeElement = earthquakeItem.querySelector('magnitude');
-      const intensityElement = earthquakeItem.querySelector('intensity'); // 震度情報
-
-      row.insertCell().textContent = timeElement ? new Date(timeElement.textContent) : '-';
-      row.insertCell().textContent = locationElement ? locationElement.textContent : '-';
-      row.insertCell().textContent = magnitudeElement ? magnitudeElement.textContent : '-';
-      row.insertCell().textContent = intensityElement ? intensityElement.textContent : '-';
+      row.insertCell().textContent = earthquake.time ? new Date(earthquake.time) : '-';
+      row.insertCell().textContent = earthquake.place ? earthquake.place : '-';
+      row.insertCell().textContent = earthquake.magnitude ? earthquake.magnitude : '-';
+      row.insertCell().textContent = earthquake.maxIntensity ? earthquake.maxIntensity : '-';
     });
 
     earthquakeListElement.appendChild(table);
