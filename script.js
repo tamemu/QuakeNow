@@ -50,6 +50,44 @@ function displayEarthquakes(data) {
   }
 }
 
+function displayEarthquakes(data) {
+  earthquakeListElement.innerHTML = ''; // 既存の地震情報をクリア
+
+  if (data && data.results && data.results.length > 0) {
+    console.log("取得したデータ:", data); // データの内容をコンソールに出力
+
+    // テーブルの作成
+    const table = document.createElement('table');
+    table.classList.add('earthquake-table');
+
+    // テーブルヘッダーの作成
+    const thead = table.createTHead();
+    const headerRow = thead.insertRow();
+    headerRow.insertCell().textContent = '発生日時';
+    headerRow.insertCell().textContent = '震源地';
+    headerRow.insertCell().textContent = 'マグニチュード';
+    headerRow.insertCell().textContent = '最大震度';
+
+    // テーブルボディの作成
+    const tbody = table.createTBody();
+
+    data.results.forEach(earthquake => {
+      const row = tbody.insertRow();
+
+      row.insertCell().textContent = earthquake.time ? new Date(earthquake.time) : '-';
+      row.insertCell().textContent = earthquake.place ? earthquake.place : '-';
+      row.insertCell().textContent = earthquake.magnitude ? earthquake.magnitude : '-';
+      row.insertCell().textContent = earthquake.maxIntensity ? earthquake.maxIntensity : '-';
+    });
+
+    earthquakeListElement.appendChild(table);
+  } else {
+    console.log("地震情報はありませんでした。"); // データがない場合のメッセージをコンソールに出力
+    earthquakeListElement.innerHTML = '<p>地震情報はありません。</p>';
+  }
+}
+
+
 // 初回読み込みと定期的な更新
 fetchEarthquakes();
 setInterval(fetchEarthquakes, 60000); // 60秒ごとに更新 (APIの利用制限に注意)
