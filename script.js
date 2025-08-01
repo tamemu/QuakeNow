@@ -1,42 +1,42 @@
-const earthquakeListElement = document.getElementById('earthquake-list');
+// 地図の初期化
+var map = L.map('map').setView([37.8, 139.7], 5); // 東京を中央に設定
 
-// APIのエンドポイント (JSON形式)
-const apiEndpoint = 'https://api.p2pquake.net/v2/jma/quake';
-
-function fetchEarthquakes() {
-  fetch(apiEndpoint)
-    .then(response => response.json()) // JSONとしてデータを取得
-    .then(data => {
-      // データの処理と表示
-      displayEarthquakes(data);
-    })
-    .catch(error => {
-      console.error('データ取得エラー:', error);
-      earthquakeListElement.innerHTML = '<p>データ取得に失敗しました。</p>';
-    });
-}
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+}).addTo(map);
 
 function displayEarthquakes(data) {
   const earthquakeListElement = document.getElementById('earthquake-list');
-  earthquakeListElement.innerHTML = ''; // 既存の地震情報をクリア
+  const detailModal = new bootstrap.Modal(document.getElementById('detailModal')); // モーダルインスタンスを作成
+  earthquakeListElement.innerHTML = '';
 
   if (data && Array.isArray(data)) {
-    for (let i = 0; i < data.length; i++) {
-      const earthquake = data[i].earthquake;
+    let filteredData = data; // フィルタリングされたデータ
+
+    // マグニチュードフィルターの適用
+    const magnitudeFilterValue = document.getElementById('magnitudeFilter').value;
+    if (magnitudeFilterValue > 0) {
+      filteredData = data.filter(item => item.earthquake.hypocenter.magnitude >= magnitudeFilterValue);
+    }
+
+    for (let i = 0; i < filteredData.length; i++) {
+      const earthquake = filteredData[i].earthquake;
 
       if (earthquake) {
         const time = earthquake.time;
         const place = earthquake.hypocenter.name;
         const magnitude = earthquake.hypocenter.magnitude;
         const maxScale = earthquake.maxScale;
+        const latitude = earthquake.latitude;
+        const longitude = earthquake.longitude;
 
         // カードを作成
         const cardElement = document.createElement('div');
-        cardElement.classList.add('earthquake-card', 'col-md-12'); // Bootstrapのクラスを追加
+        cardElement.classList.add('earthquake-card', 'col-md-12');
 
         // カードの内容を構築
         let cardContent = `
-          <div class="card">
+          <div class="card" data-bs-toggle="modal" data-bs-target="#detailModal">
             <div class="card-body">
               <h5 class="card-title">${place}</h5>
               <p class="card-text">マグニチュード: ${magnitude}</p>
@@ -48,6 +48,11 @@ function displayEarthquakes(data) {
 
         cardElement.innerHTML = cardContent;
         earthquakeListElement.appendChild(cardElement);
+
+        // 地図上にマーカーを追加
+        L.marker([latitude, longitude]).addTo(map)
+          .bindPopup(`<b>場所:</b> ${place}<br><b>マグニチュード:</b> ${magnitude}`)
+          .openPopup();
       } else {
         console.warn(`地震情報がありません: ${data[i]}`);
       }
@@ -58,8 +63,33 @@ function displayEarthquakes(data) {
   }
 }
 
+// 詳細モーダルに表示する情報を設定
+document.addEventListener('DOMContentLoaded', function() {
+  const earthquakeCards = document.querySelectorAll('.card');
+  earthquakeCards.forEach(card => {
+    card.addEventListener('click', function() {
+      const dataIndex = card.closest('.row').children.indexOf(card); // カードのインデックスを取得
 
+      if (data) {
+        const earthquake = data[dataIndex].earthquake;
+        const detailContentElement = document.getElementById('detailContent');
+        let detailHTML = `
+          <h2>${earthquake.hypocenter.name}</h2>
+          <p>マグニチュード: ${earthquake.hypocenter.magnitude}</p>
+          <p>最大震度: ${earthquake.maxScale}</p>
+          <p>震源地: ${earthquake.latitude}, ${earthquake.longitude}</p>
+          <!-- 他の地震詳細情報 -->
+        `;
+        detailContentElement.innerHTML = detailHTML;
 
-// 初回読み込みと定期的な更新
-fetchEarthquakes();
-setInterval(fetchEarthquakes, 60000); // 60秒ごとに更新 (APIの利用制限に注意)
+        // モーダルを表示
+        detailModal.show();
+      }
+    });
+  });
+});
+
+// リアルタイム更新 (例: 5秒ごとに)
+setInterval(function() {
+  // ここで地震データを取得して表示を更新する処理を記述
+}, 5000);
