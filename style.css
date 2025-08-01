@@ -17,3 +17,19 @@ h1 {
   padding: 5px;
   border-bottom: 1px dotted #eee;
 }
+
+
+.earthquake-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.earthquake-table th, .earthquake-table td {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: left;
+}
+
+.earthquake-table th {
+  background-color: #f2f2f2;
+}
