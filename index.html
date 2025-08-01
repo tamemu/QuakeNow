@@ -6,6 +6,11 @@
   <title>地震速報</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZJTgU0cbWo+Hq9pPd8Q63mBPkSJRnOcCjKZeY0uXJbE4XwGjVPzVvWfL0oB7dlQvRysM6vP5t2yN1iF0Ow==" crossorigin=""/>
+  <!-- Font Awesome CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
   <style>
     /* カスタムスタイル (必要に応じて) */
     .earthquake-card {
@@ -17,21 +22,53 @@
       font-size: 0.875rem;
       color: #6c757d;
     }
+    #map { height: 400px; } /* 地図の高さを設定 */
   </style>
 </head>
 <body>
 
   <div class="container mt-3">
     <h1>地震速報</h1>
+
+    <!-- フィルタリング -->
+    <div class="mb-3">
+      <label for="magnitudeFilter" class="form-label">マグニチュード:</label>
+      <input type="number" id="magnitudeFilter" class="form-control" value="0">
+    </div>
+
+    <!-- 地図表示 -->
+    <div id="map" class="mb-3"></div>
+
+    <!-- 地震リスト -->
     <div id="earthquake-list" class="row">
       <!-- 地震情報がここに表示されます -->
     </div>
+
+    <!-- モーダルウィンドウ -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="detailModalLabel">地震詳細</h5>
+          </div>
+          <div class="modal-body" id="detailContent">
+            <!-- 詳細情報がここに表示されます -->
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Bootstrap JS (オプション) -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8tacXYojaMpxafNeT1CiabwpOX4N4dtgI6hGysnSOvWXRfF9rpC8D9sY3aJbDzrUvmRo2Rj1m0Kg==" crossorigin=""></script>
+
+  <!-- Font Awesome JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
 
   <!-- JavaScriptファイル -->
   <script src="script.js"></script>
