@@ -19,68 +19,47 @@ function fetchEarthquakes() {
 function displayEarthquakes(data) {
   earthquakeListElement.innerHTML = ''; // 既存の地震情報をクリア
 
-  if (data && data.results && data.results.length > 0) {
-    // テーブルの作成
-    const table = document.createElement('table');
-    table.classList.add('earthquake-table');
+  console.log("取得したデータ:", data); // データの内容をコンソールに出力
 
-    // テーブルヘッダーの作成
-    const thead = table.createTHead();
-    const headerRow = thead.insertRow();
-    headerRow.insertCell().textContent = '発生日時';
-    headerRow.insertCell().textContent = '震源地';
-    headerRow.insertCell().textContent = 'マグニチュード';
-    headerRow.insertCell().textContent = '最大震度';
+  if (data && Array.isArray(data)) { // data が配列であることを確認
+    data.forEach(item => {
+      const earthquake = item.earthquake;
 
-    // テーブルボディの作成
-    const tbody = table.createTBody();
+      if (earthquake) {
+        const time = earthquake.time;
+        const place = earthquake.name;
+        const magnitude = earthquake.magnitude;
+        const maxScale = earthquake.maxScale;
 
-    data.results.forEach(earthquake => {
-      const row = tbody.insertRow();
+        // テーブルの作成
+        const table = document.createElement('table');
+        table.classList.add('earthquake-table');
 
-      row.insertCell().textContent = earthquake.time ? new Date(earthquake.time) : '-';
-      row.insertCell().textContent = earthquake.place ? earthquake.place : '-';
-      row.insertCell().textContent = earthquake.magnitude ? earthquake.magnitude : '-';
-      row.insertCell().textContent = earthquake.maxIntensity ? earthquake.maxIntensity : '-';
+        // テーブルヘッダーの作成
+        const thead = table.createTHead();
+        const headerRow = thead.insertRow();
+        headerRow.insertCell().textContent = '発生日時';
+        headerRow.insertCell().textContent = '震源地';
+        headerRow.insertCell().textContent = 'マグニチュード';
+        headerRow.insertCell().textContent = '最大震度';
+
+        // テーブルボディの作成
+        const tbody = table.createTBody();
+
+        const row = tbody.insertRow();
+
+        row.insertCell().textContent = time ? new Date(time) : '-';
+        row.insertCell().textContent = place ? place : '-';
+        row.insertCell().textContent = magnitude ? magnitude : '-';
+        row.insertCell().textContent = maxScale ? maxScale : '-';
+
+
+        earthquakeListElement.appendChild(table);
+      } else {
+        console.warn("地震情報がありません:", item); // earthquake が存在しない場合の警告をコンソールに出力
+      }
     });
 
-    earthquakeListElement.appendChild(table);
-  } else {
-    earthquakeListElement.innerHTML = '<p>地震情報はありません。</p>';
-  }
-}
-
-function displayEarthquakes(data) {
-  earthquakeListElement.innerHTML = ''; // 既存の地震情報をクリア
-
-  if (data && data.results && data.results.length > 0) {
-    console.log("取得したデータ:", data); // データの内容をコンソールに出力
-
-    // テーブルの作成
-    const table = document.createElement('table');
-    table.classList.add('earthquake-table');
-
-    // テーブルヘッダーの作成
-    const thead = table.createTHead();
-    const headerRow = thead.insertRow();
-    headerRow.insertCell().textContent = '発生日時';
-    headerRow.insertCell().textContent = '震源地';
-    headerRow.insertCell().textContent = 'マグニチュード';
-    headerRow.insertCell().textContent = '最大震度';
-
-    // テーブルボディの作成
-    const tbody = table.createTBody();
-
-    data.results.forEach(earthquake => {
-      const row = tbody.insertRow();
-
-      row.insertCell().textContent = earthquake.time ? new Date(earthquake.time) : '-';
-      row.insertCell().textContent = earthquake.place ? earthquake.place : '-';
-      row.insertCell().textContent = earthquake.magnitude ? earthquake.magnitude : '-';
-      row.insertCell().textContent = earthquake.maxIntensity ? earthquake.maxIntensity : '-';
-    });
-
-    earthquakeListElement.appendChild(table);
   } else {
     console.log("地震情報はありませんでした。"); // データがない場合のメッセージをコンソールに出力
     earthquakeListElement.innerHTML = '<p>地震情報はありません。</p>';
