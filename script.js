@@ -27,6 +27,7 @@ function displayEarthquakes(data) {
 
       if (earthquake) {
         const time = earthquake.time;
+        // 震源地の説明として、地震オブジェクトのnameを使用
         const place = earthquake.name;
         const magnitude = earthquake.magnitude;
         const maxScale = earthquake.maxScale;
@@ -65,6 +66,7 @@ function displayEarthquakes(data) {
     earthquakeListElement.innerHTML = '<p>地震情報はありません。</p>';
   }
 }
+
 
 
 // 初回読み込みと定期的な更新
