@@ -17,49 +17,39 @@ function fetchEarthquakes() {
 }
 
 function displayEarthquakes(data) {
+  const earthquakeListElement = document.getElementById('earthquake-list');
   earthquakeListElement.innerHTML = ''; // 既存の地震情報をクリア
 
-  console.log("取得したデータ:", data); // データの内容をコンソールに出力
-
-  if (data && Array.isArray(data)) { // data が配列であることを確認
+  if (data && Array.isArray(data)) {
     for (let i = 0; i < data.length; i++) {
-      const earthquake = data[i].earthquake; // earthquakeオブジェクトを取得
+      const earthquake = data[i].earthquake;
 
       if (earthquake) {
         const time = earthquake.time;
-        // 震源地の説明として、地震オブジェクトのhypocenter.nameを使用
         const place = earthquake.hypocenter.name;
-        // マグニチュードを取得
         const magnitude = earthquake.hypocenter.magnitude;
         const maxScale = earthquake.maxScale;
 
-        // テーブルの作成
-        const table = document.createElement('table');
-        table.classList.add('earthquake-table');
+        // カードを作成
+        const cardElement = document.createElement('div');
+        cardElement.classList.add('earthquake-card', 'col-md-12'); // Bootstrapのクラスを追加
 
-        // テーブルヘッダーの作成
-        const thead = table.createTHead();
-        const headerRow = thead.insertRow();
-        headerRow.insertCell().textContent = '発生日時';
-        headerRow.insertCell().textContent = '震源地';
-        headerRow.insertCell().textContent = 'マグニチュード';
-        headerRow.insertCell().textContent = '最大震度';
+        // カードの内容を構築
+        let cardContent = `
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">${place}</h5>
+              <p class="card-text">マグニチュード: ${magnitude}</p>
+              <p class="card-text">最大震度: ${maxScale}</p>
+              <small class="text-muted earthquake-time">${new Date(time).toLocaleString()}</small>
+            </div>
+          </div>
+        `;
 
-        // テーブルボディの作成
-        const tbody = table.createTBody();
-
-        const row = tbody.insertRow();
-
-        row.insertCell().textContent = time ? new Date(time) : '-';
-        row.insertCell().textContent = place ? place : '-';
-        row.insertCell().textContent = magnitude ? magnitude : '-';
-        row.insertCell().textContent = maxScale ? maxScale : '-';
-
-
-        earthquakeListElement.appendChild(table);
+        cardElement.innerHTML = cardContent;
+        earthquakeListElement.appendChild(cardElement);
       } else {
-        console.warn(`地震情報がありません: ${data[i]}`); // データ全体を警告として出力
-        // earthquakeListElement.innerHTML += '<p>地震情報はありません。</p>';  // 各イベントごとにエラーメッセージを表示する場合
+        console.warn(`地震情報がありません: ${data[i]}`);
       }
     }
   } else {
