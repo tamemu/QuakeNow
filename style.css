@@ -162,95 +162,6 @@ body {
     font-size: 0.9rem;
 }
 
-.earthquake-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
-}
-
-.earthquake-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.earthquake-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-}
-
-.magnitude {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: white;
-}
-
-.mag-mini { background: #28a745; }
-.mag-minor { background: #ffc107; }
-.mag-light { background: #fd7e14; }
-.mag-moderate { background: #dc3545; }
-.mag-strong { background: #6f42c1; }
-.mag-major { background: #e83e8c; }
-.mag-great { background: #dc3545; }
-
-.earthquake-info h3 {
-    color: #333;
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-    line-height: 1.4;
-    padding-right: 70px;
-}
-
-.earthquake-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.detail-item {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.detail-label {
-    font-size: 0.8rem;
-    color: #666;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.detail-value {
-    font-size: 0.95rem;
-    color: #333;
-    font-weight: 500;
-}
-
-.earthquake-time {
-    font-size: 0.9rem;
-    color: #888;
-    border-top: 1px solid #eee;
-    padding-top: 15px;
-    margin-top: 15px;
-}
-
 .no-data {
     text-align: center;
     padding: 60px 20px;
@@ -390,6 +301,14 @@ body {
     margin-right: 12px;
     flex-shrink: 0;
 }
+
+.mag-mini { background: #28a745; }
+.mag-minor { background: #ffc107; }
+.mag-light { background: #fd7e14; }
+.mag-moderate { background: #dc3545; }
+.mag-strong { background: #6f42c1; }
+.mag-major { background: #e83e8c; }
+.mag-great { background: #dc3545; }
 
 .item-location {
     flex: 1;
