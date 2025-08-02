@@ -518,32 +518,61 @@
                 const minMagnitude = document.getElementById('minMagnitude').value;
                 const region = document.getElementById('region').value;
 
-                const endtime = new Date().toISOString().split('T')[0];
+                // USGSのAPIは現在時刻より未来の時刻を受け付けないため、現在時刻を使用
+                const now = new Date();
+                const endtime = now.toISOString();
                 let starttime;
+                
                 switch(timeRange) {
                     case 'day':
-                        starttime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                        starttime = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
                         break;
                     case 'week':
-                        starttime = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                        starttime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
                         break;
                     case 'month':
-                        starttime = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                        starttime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
                         break;
                 }
 
                 const regionParams = getRegionParams(region);
                 const minMagParam = minMagnitude > 0 ? `&minmagnitude=${minMagnitude}` : '';
                 
-                const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${starttime}&endtime=${endtime}${minMagParam}${regionParams}&orderby=time-desc&limit=100`;
+                // URLパラメータを正しい形式で構築
+                const params = new URLSearchParams({
+                    format: 'geojson',
+                    starttime: starttime,
+                    endtime: endtime,
+                    orderby: 'time-desc',
+                    limit: '100'
+                });
+                
+                if (minMagnitude > 0) {
+                    params.append('minmagnitude', minMagnitude);
+                }
+                
+                // 地域パラメータを追加
+                if (region !== 'global') {
+                    const regionBounds = getRegionBounds(region);
+                    if (regionBounds) {
+                        Object.entries(regionBounds).forEach(([key, value]) => {
+                            params.append(key, value);
+                        });
+                    }
+                }
+                
+                const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?${params.toString()}`;
+                console.log('リクエストURL:', url); // デバッグ用
 
                 const response = await fetch(url);
                 if (!response.ok) {
-                    throw new Error(`HTTPエラー: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('API Error Response:', errorText);
+                    throw new Error(`HTTPエラー: ${response.status} - ${errorText}`);
                 }
 
                 const data = await response.json();
-                earthquakeData = data.features;
+                earthquakeData = data.features || [];
 
                 if (earthquakeData.length === 0) {
                     noData.style.display = 'block';
