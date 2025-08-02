@@ -554,9 +554,6 @@
                         starttime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
                         break;
                 }
-
-                const regionParams = getRegionParams(region);
-                const minMagParam = minMagnitude > 0 ? `&minmagnitude=${minMagnitude}` : '';
                 
                 // URLパラメータを正しい形式で構築
                 const params = new URLSearchParams({
