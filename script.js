@@ -129,7 +129,22 @@ function selectEarthquake(earthquakeId) {
         item.classList.remove('selected');
         if (item.dataset.earthquakeId === earthquakeId.toString()) {
             item.classList.add('selected');
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            // リストコンテナ内でスクロール（ページ全体はスクロールしない）
+            const listContainer = document.querySelector('.earthquake-list');
+            if (listContainer) {
+                const itemRect = item.getBoundingClientRect();
+                const containerRect = listContainer.getBoundingClientRect();
+                
+                // アイテムがコンテナの可視範囲外にある場合のみスクロール
+                if (itemRect.top < containerRect.top || itemRect.bottom > containerRect.bottom) {
+                    const scrollTop = listContainer.scrollTop + (itemRect.top - containerRect.top) - 50;
+                    listContainer.scrollTo({
+                        top: scrollTop,
+                        behavior: 'smooth'
+                    });
+                }
+            }
         }
     });
     
