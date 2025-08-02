@@ -63,163 +63,54 @@ function formatDate(timestamp) {
     }
 }
 
-function translateLocation(location) {
+// 翻訳キャッシュ
+const translationCache = new Map();
+
+async function translateText(text, targetLang = 'ja') {
+    if (!text || text.trim() === '') return text;
+    
+    // キャッシュをチェック
+    const cacheKey = `${text}_${targetLang}`;
+    if (translationCache.has(cacheKey)) {
+        return translationCache.get(cacheKey);
+    }
+    
+    try {
+        // MyMemory Translation API (無料)
+        const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`);
+        const data = await response.json();
+        
+        if (data.responseStatus === 200 && data.responseData.translatedText) {
+            const translatedText = data.responseData.translatedText;
+            // キャッシュに保存
+            translationCache.set(cacheKey, translatedText);
+            return translatedText;
+        } else {
+            // API が失敗した場合は元のテキストを返す
+            console.warn('翻訳API呼び出しに失敗:', data);
+            return text;
+        }
+    } catch (error) {
+        console.warn('翻訳エラー:', error);
+        return text; // エラーの場合は元のテキストを返す
+    }
+}
+
+async function translateLocation(location) {
     if (!location) return '不明な場所';
     
-    let translated = location;
+    // 既に日本語の場合は翻訳をスキップ
+    if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(location)) {
+        return location;
+    }
     
-    // 方角の翻訳
-    translated = translated.replace(/\bN\b/g, '北');
-    translated = translated.replace(/\bS\b/g, '南');
-    translated = translated.replace(/\bE\b/g, '東');
-    translated = translated.replace(/\bW\b/g, '西');
-    translated = translated.replace(/\bNE\b/g, '北東');
-    translated = translated.replace(/\bNW\b/g, '北西');
-    translated = translated.replace(/\bSE\b/g, '南東');
-    translated = translated.replace(/\bSW\b/g, '南西');
-    translated = translated.replace(/\bESE\b/g, '東南東');
-    translated = translated.replace(/\bSSE\b/g, '南南東');
-    translated = translated.replace(/\bENE\b/g, '東北東');
-    translated = translated.replace(/\bSSW\b/g, '南南西');
-    translated = translated.replace(/\bWNW\b/g, '西北西');
-    translated = translated.replace(/\bNNW\b/g, '北北西');
-    
-    // 前置詞・接続詞の翻訳
-    translated = translated.replace(/\bof\b/g, 'の');
-    translated = translated.replace(/\bnear\b/g, '付近');
-    translated = translated.replace(/\boffshore\b/g, '沖');
-    translated = translated.replace(/\bonshore\b/g, '陸上');
-    translated = translated.replace(/\bthe\b/g, '');
-    
-    // 国名・地域名の翻訳
-    const countryTranslations = {
-        'Japan': '日本',
-        'China': '中国',
-        'South Korea': '韓国',
-        'North Korea': '北朝鮮',
-        'Taiwan': '台湾',
-        'Philippines': 'フィリピン',
-        'Indonesia': 'インドネシア',
-        'Thailand': 'タイ',
-        'Vietnam': 'ベトナム',
-        'Malaysia': 'マレーシア',
-        'Singapore': 'シンガポール',
-        'Myanmar': 'ミャンマー',
-        'Cambodia': 'カンボジア',
-        'Laos': 'ラオス',
-        'Russia': 'ロシア',
-        'Mongolia': 'モンゴル',
-        'United States': 'アメリカ',
-        'USA': 'アメリカ',
-        'Mexico': 'メキシコ',
-        'Canada': 'カナダ',
-        'Chile': 'チリ',
-        'Peru': 'ペルー',
-        'Ecuador': 'エクアドル',
-        'Colombia': 'コロンビア',
-        'Brazil': 'ブラジル',
-        'Argentina': 'アルゼンチン',
-        'Bolivia': 'ボリビア',
-        'Venezuela': 'ベネズエラ',
-        'Turkey': 'トルコ',
-        'Greece': 'ギリシャ',
-        'Italy': 'イタリア',
-        'Spain': 'スペイン',
-        'Portugal': 'ポルトガル',
-        'France': 'フランス',
-        'Germany': 'ドイツ',
-        'United Kingdom': 'イギリス',
-        'Norway': 'ノルウェー',
-        'Sweden': 'スウェーデン',
-        'Finland': 'フィンランド',
-        'Iceland': 'アイスランド',
-        'Iran': 'イラン',
-        'Iraq': 'イラク',
-        'Afghanistan': 'アフガニスタン',
-        'Pakistan': 'パキスタン',
-        'India': 'インド',
-        'Nepal': 'ネパール',
-        'Bangladesh': 'バングラデシュ',
-        'Sri Lanka': 'スリランカ',
-        'New Zealand': 'ニュージーランド',
-        'Australia': 'オーストラリア',
-        'Papua New Guinea': 'パプアニューギニア',
-        'Fiji': 'フィジー',
-        'Vanuatu': 'バヌアツ',
-        'Solomon Islands': 'ソロモン諸島',
-        'Tonga': 'トンガ',
-        'Samoa': 'サモア',
-        'Alaska': 'アラスカ',
-        'California': 'カリフォルニア',
-        'Nevada': 'ネバダ',
-        'Oregon': 'オレゴン',
-        'Washington': 'ワシントン',
-        'Hawaii': 'ハワイ',
-        'Puerto Rico': 'プエルトリコ',
-        'Greenland': 'グリーンランド'
-    };
-    
-    // 日本の都道府県・地域名
-    const japanRegions = {
-        'Honshu': '本州',
-        'Kyushu': '九州',
-        'Shikoku': '四国',
-        'Hokkaido': '北海道',
-        'Okinawa': '沖縄',
-        'Tokyo': '東京',
-        'Osaka': '大阪',
-        'Kyoto': '京都',
-        'Nagoya': '名古屋',
-        'Yokohama': '横浜',
-        'Kobe': '神戸',
-        'Fukuoka': '福岡',
-        'Sendai': '仙台',
-        'Hiroshima': '広島',
-        'Kumamoto': '熊本',
-        'Kagoshima': '鹿児島',
-        'Miyazaki': '宮崎',
-        'Oita': '大分',
-        'Saga': '佐賀',
-        'Nagasaki': '長崎'
-    };
-    
-    // 海洋・地理的特徴
-    const geographicTerms = {
-        'Pacific Ocean': '太平洋',
-        'Sea': '海',
-        'Bay': '湾',
-        'Gulf': '湾',
-        'Strait': '海峡',
-        'Channel': '海峡',
-        'Island': '島',
-        'Islands': '諸島',
-        'Peninsula': '半島',
-        'Ridge': '海嶺',
-        'Trench': '海溝',
-        'Basin': '海盆',
-        'Plateau': '高原',
-        'Plain': '平原',
-        'Coast': '海岸',
-        'Shore': '沿岸'
-    };
-    
-    // 翻訳辞書を統合
-    const allTranslations = { ...countryTranslations, ...japanRegions, ...geographicTerms };
-    
-    // 翻訳を適用
-    Object.entries(allTranslations).forEach(([english, japanese]) => {
-        const regex = new RegExp(`\\b${english}\\b`, 'gi');
-        translated = translated.replace(regex, japanese);
-    });
-    
-    // 数字+km の表記を処理
-    translated = translated.replace(/(\d+)\s*km/g, '$1km');
-    
-    // 余分な空白を削除
-    translated = translated.replace(/\s+/g, ' ').trim();
-    
-    // 空の場合は元の文字列を返す
-    return translated || location;
+    try {
+        const translated = await translateText(location);
+        return translated || location;
+    } catch (error) {
+        console.warn('場所の翻訳に失敗:', error);
+        return location;
+    }
 }
 
 function initializeMap() {
@@ -234,16 +125,17 @@ function initializeMap() {
     }
 }
 
-function updateMap(earthquakes) {
+async function updateMap(earthquakes) {
     if (!map) return;
     
     markersLayer.clearLayers();
     
-    earthquakes.forEach((earthquake, index) => {
+    // 翻訳処理を並列実行
+    const translationPromises = earthquakes.map(async (earthquake, index) => {
         const props = earthquake.properties;
         const coords = earthquake.geometry.coordinates;
         const magnitude = props.mag;
-        const place = translateLocation(props.place) || '不明な場所';
+        const place = await translateLocation(props.place) || '不明な場所';
         
         const marker = L.circleMarker([coords[1], coords[0]], {
             radius: getMagnitudeRadius(magnitude),
@@ -271,8 +163,12 @@ function updateMap(earthquakes) {
             selectEarthquake(this.earthquakeId);
         });
         
-        markersLayer.addLayer(marker);
+        return marker;
     });
+    
+    // すべての翻訳が完了してからマーカーを追加
+    const markers = await Promise.all(translationPromises);
+    markers.forEach(marker => markersLayer.addLayer(marker));
     
     if (earthquakes.length > 0) {
         const group = new L.featureGroup(markersLayer.getLayers());
@@ -401,8 +297,8 @@ async function loadEarthquakes() {
         if (earthquakeData.length === 0) {
             noData.style.display = 'block';
         } else {
-            displayEarthquakesList(earthquakeData);
-            updateMap(earthquakeData);
+            await displayEarthquakesList(earthquakeData);
+            await updateMap(earthquakeData);
         }
 
     } catch (err) {
@@ -418,43 +314,62 @@ async function loadEarthquakes() {
     }
 }
 
-function displayEarthquakesList(earthquakes) {
+async function displayEarthquakesList(earthquakes) {
     const list = document.getElementById('earthquakeList');
     if (!list) {
         console.warn('Earthquake list container not found');
         return;
     }
     
-    list.innerHTML = earthquakes.map((earthquake, index) => {
+    // まずローディング表示
+    list.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">翻訳中...</div>';
+    
+    // 翻訳処理を並列実行
+    const translationPromises = earthquakes.map(async (earthquake, index) => {
         const props = earthquake.properties;
         const coords = earthquake.geometry.coordinates;
         const magnitude = props.mag;
-        const place = translateLocation(props.place) || '不明な場所';
+        const place = await translateLocation(props.place) || '不明な場所';
         const time = props.time;
         const depth = coords[2];
         const earthquakeId = props.id || index;
         
+        return {
+            earthquake,
+            magnitude,
+            place,
+            time,
+            depth,
+            earthquakeId,
+            coords
+        };
+    });
+    
+    // すべての翻訳が完了してからリストを更新
+    const translatedData = await Promise.all(translationPromises);
+    
+    list.innerHTML = translatedData.map(data => {
         return `
-            <div class="earthquake-item" data-earthquake-id="${earthquakeId}" onclick="selectEarthquake(${earthquakeId})">
+            <div class="earthquake-item" data-earthquake-id="${data.earthquakeId}" onclick="selectEarthquake(${data.earthquakeId})">
                 <div class="item-header">
-                    <div class="item-magnitude ${getMagnitudeClass(magnitude)}">
-                        ${magnitude.toFixed(1)}
+                    <div class="item-magnitude ${getMagnitudeClass(data.magnitude)}">
+                        ${data.magnitude.toFixed(1)}
                     </div>
-                    <div class="item-location">${place}</div>
-                    <div class="item-time">${formatDate(time)}</div>
+                    <div class="item-location">${data.place}</div>
+                    <div class="item-time">${formatDate(data.time)}</div>
                 </div>
                 <div class="item-details">
                     <div class="item-detail">
                         <span class="item-detail-label">深さ</span>
-                        <span class="item-detail-value">${depth.toFixed(1)} km</span>
+                        <span class="item-detail-value">${data.depth.toFixed(1)} km</span>
                     </div>
                     <div class="item-detail">
                         <span class="item-detail-label">緯度</span>
-                        <span class="item-detail-value">${coords[1].toFixed(3)}°</span>
+                        <span class="item-detail-value">${data.coords[1].toFixed(3)}°</span>
                     </div>
                     <div class="item-detail">
                         <span class="item-detail-label">経度</span>
-                        <span class="item-detail-value">${coords[0].toFixed(3)}°</span>
+                        <span class="item-detail-value">${data.coords[0].toFixed(3)}°</span>
                     </div>
                 </div>
             </div>
@@ -462,7 +377,7 @@ function displayEarthquakesList(earthquakes) {
     }).join('');
 }
 
-function sortEarthquakes(sortBy) {
+async function sortEarthquakes(sortBy) {
     if (!earthquakeData || earthquakeData.length === 0) return;
     
     const sortedData = [...earthquakeData];
@@ -473,8 +388,8 @@ function sortEarthquakes(sortBy) {
         sortedData.sort((a, b) => b.properties.time - a.properties.time);
     }
     
-    displayEarthquakesList(sortedData);
-    updateMap(sortedData);
+    await displayEarthquakesList(sortedData);
+    await updateMap(sortedData);
 }
 
 function toggleAutoRefresh() {
@@ -532,21 +447,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ソートボタンのイベントリスナー
     document.querySelectorAll('.sort-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', async function() {
             // アクティブ状態を切り替え
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             
             // ソート実行
             const sortBy = this.dataset.sort;
-            sortEarthquakes(sortBy);
+            await sortEarthquakes(sortBy);
         });
     });
     
     // 更新頻度変更のイベントリスナー
     const intervalSelect = document.getElementById('refreshInterval');
     if (intervalSelect) {
-        intervalSelect.addEventListener('change', function() {
+        intervalSelect.addEventListener('change', async function() {
             // 自動更新が有効な場合は新しい頻度で再開
             const toggle = document.getElementById('autoRefreshToggle');
             if (toggle && toggle.classList.contains('active')) {
@@ -573,4 +488,3 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
