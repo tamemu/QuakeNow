@@ -189,6 +189,11 @@ function calculateStats(earthquakes) {
 
 function displayStats(stats) {
     const statsContainer = document.getElementById('stats');
+    if (!statsContainer) {
+        console.warn('Stats container not found');
+        return;
+    }
+    
     statsContainer.innerHTML = `
         <div class="stat-card">
             <div class="stat-value">${stats.total}</div>
@@ -212,13 +217,22 @@ function displayStats(stats) {
 async function loadEarthquakes() {
     const loading = document.getElementById('loading');
     const error = document.getElementById('error');
-    const grid = document.getElementById('earthquakeGrid');
     const noData = document.getElementById('noData');
+
+    if (!loading || !error || !noData) {
+        console.error('Required DOM elements not found');
+        return;
+    }
 
     loading.style.display = 'block';
     error.style.display = 'none';
-    grid.innerHTML = '';
     noData.style.display = 'none';
+
+    // リストをクリア
+    const list = document.getElementById('earthquakeList');
+    if (list) {
+        list.innerHTML = '';
+    }
 
     try {
         const timeRange = document.getElementById('timeRange').value;
@@ -289,16 +303,24 @@ async function loadEarthquakes() {
         displayStats(stats);
 
     } catch (err) {
-        error.textContent = `エラーが発生しました: ${err.message}`;
-        error.style.display = 'block';
+        if (error) {
+            error.textContent = `エラーが発生しました: ${err.message}`;
+            error.style.display = 'block';
+        }
         console.error('地震データの取得に失敗:', err);
     } finally {
-        loading.style.display = 'none';
+        if (loading) {
+            loading.style.display = 'none';
+        }
     }
 }
 
 function displayEarthquakesList(earthquakes) {
     const list = document.getElementById('earthquakeList');
+    if (!list) {
+        console.warn('Earthquake list container not found');
+        return;
+    }
     
     list.innerHTML = earthquakes.map((earthquake, index) => {
         const props = earthquake.properties;
@@ -370,7 +392,26 @@ function toggleAutoRefresh() {
 
 // 初回読み込み
 document.addEventListener('DOMContentLoaded', function() {
-    initializeMap();
+    console.log('DOM Content Loaded');
+    
+    // 必要な要素の存在確認
+    const requiredElements = ['map', 'earthquakeList', 'stats', 'loading', 'error', 'noData'];
+    const missingElements = requiredElements.filter(id => !document.getElementById(id));
+    
+    if (missingElements.length > 0) {
+        console.error('Missing required elements:', missingElements);
+        return;
+    }
+    
+    // マップ初期化
+    try {
+        initializeMap();
+        console.log('Map initialized');
+    } catch (error) {
+        console.error('Failed to initialize map:', error);
+    }
+    
+    // 地震データ読み込み
     loadEarthquakes();
     
     // ソートボタンのイベントリスナー
