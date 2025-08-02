@@ -132,7 +132,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 400px;
     gap: 20px;
-    height: 400px;
+    height: 350px;
 }
 
 .map-container {
@@ -159,7 +159,8 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.18);
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 350px;
+    max-height: 350px;
 }
 
 .list-header {
@@ -202,7 +203,8 @@ body {
     flex: 1;
     overflow-y: auto;
     padding: 10px 0;
-    max-height: 320px;
+    height: 290px;
+    max-height: 290px;
 }
 
 /* カスタムスクロールバー */
@@ -392,16 +394,18 @@ body {
 
     .main-content {
         grid-template-columns: 1fr;
-        grid-template-rows: 300px 400px;
+        grid-template-rows: 250px 350px;
         height: auto;
         gap: 15px;
     }
 
     .list-container {
-        height: 400px;
+        height: 350px;
+        max-height: 350px;
     }
 
     .earthquake-list {
-        max-height: 320px;
+        height: 290px;
+        max-height: 290px;
     }
 }
