@@ -231,7 +231,6 @@ async function loadEarthquakes() {
     try {
         const timeRange = document.getElementById('timeRange').value;
         const minMagnitude = document.getElementById('minMagnitude').value;
-        const region = document.getElementById('region').value;
 
         // USGSのAPIは現在時刻より未来の時刻を受け付けないため、現在時刻を使用
         const now = new Date();
@@ -269,16 +268,6 @@ async function loadEarthquakes() {
         
         if (minMagnitude > 0) {
             params.append('minmagnitude', minMagnitude);
-        }
-        
-        // 地域パラメータを追加
-        if (region !== 'global') {
-            const regionBounds = getRegionBounds(region);
-            if (regionBounds) {
-                Object.entries(regionBounds).forEach(([key, value]) => {
-                    params.append(key, value);
-                });
-            }
         }
         
         const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?${params.toString()}`;
