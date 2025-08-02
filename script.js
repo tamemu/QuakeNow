@@ -376,16 +376,29 @@ function sortEarthquakes(sortBy) {
 function toggleAutoRefresh() {
     const toggle = document.getElementById('autoRefreshToggle');
     const status = document.getElementById('refreshStatus');
+    const intervalSelect = document.getElementById('refreshInterval');
     
     if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
         toggle.classList.remove('active');
         status.textContent = 'オフ';
+        intervalSelect.disabled = false;
     } else {
-        autoRefreshInterval = setInterval(loadEarthquakes, 60000); // 1分ごと
+        const intervalSeconds = parseInt(intervalSelect.value);
+        const intervalMs = intervalSeconds * 1000;
+        
+        autoRefreshInterval = setInterval(loadEarthquakes, intervalMs);
         toggle.classList.add('active');
-        status.textContent = 'オン (1分間隔)';
+        
+        let intervalText;
+        if (intervalSeconds < 60) {
+            intervalText = `${intervalSeconds}秒間隔`;
+        } else {
+            intervalText = `${intervalSeconds / 60}分間隔`;
+        }
+        status.textContent = `オン (${intervalText})`;
+        intervalSelect.disabled = true;
     }
 }
 
@@ -425,4 +438,34 @@ document.addEventListener('DOMContentLoaded', function() {
             sortEarthquakes(sortBy);
         });
     });
+    
+    // 更新頻度変更のイベントリスナー
+    const intervalSelect = document.getElementById('refreshInterval');
+    if (intervalSelect) {
+        intervalSelect.addEventListener('change', function() {
+            // 自動更新が有効な場合は新しい頻度で再開
+            const toggle = document.getElementById('autoRefreshToggle');
+            if (toggle && toggle.classList.contains('active')) {
+                // 一度停止
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                }
+                
+                // 新しい頻度で再開
+                const intervalSeconds = parseInt(this.value);
+                const intervalMs = intervalSeconds * 1000;
+                autoRefreshInterval = setInterval(loadEarthquakes, intervalMs);
+                
+                // ステータス更新
+                const status = document.getElementById('refreshStatus');
+                let intervalText;
+                if (intervalSeconds < 60) {
+                    intervalText = `${intervalSeconds}秒間隔`;
+                } else {
+                    intervalText = `${intervalSeconds / 60}分間隔`;
+                }
+                status.textContent = `オン (${intervalText})`;
+            }
+        });
+    }
 });
