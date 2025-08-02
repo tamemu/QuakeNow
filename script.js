@@ -77,6 +77,12 @@ function translateLocation(location) {
     translated = translated.replace(/\bNW\b/g, '北西');
     translated = translated.replace(/\bSE\b/g, '南東');
     translated = translated.replace(/\bSW\b/g, '南西');
+    translated = translated.replace(/\bESE\b/g, '東南東');
+    translated = translated.replace(/\bSSE\b/g, '南南東');
+    translated = translated.replace(/\bENE\b/g, '東北東');
+    translated = translated.replace(/\bSSW\b/g, '南南西');
+    translated = translated.replace(/\bWNW\b/g, '西北西');
+    translated = translated.replace(/\bNNW\b/g, '北北西');
     
     // 前置詞・接続詞の翻訳
     translated = translated.replace(/\bof\b/g, 'の');
@@ -567,3 +573,4 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
