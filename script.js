@@ -187,33 +187,6 @@ function calculateStats(earthquakes) {
     return { total, avgMagnitude, maxMagnitude, recentCount };
 }
 
-function displayStats(stats) {
-    const statsContainer = document.getElementById('stats');
-    if (!statsContainer) {
-        console.warn('Stats container not found');
-        return;
-    }
-    
-    statsContainer.innerHTML = `
-        <div class="stat-card">
-            <div class="stat-value">${stats.total}</div>
-            <div class="stat-label">総地震数</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">${stats.maxMagnitude}</div>
-            <div class="stat-label">最大マグニチュード</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">${stats.avgMagnitude}</div>
-            <div class="stat-label">平均マグニチュード</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">${stats.recentCount}</div>
-            <div class="stat-label">過去24時間</div>
-        </div>
-    `;
-}
-
 async function loadEarthquakes() {
     const loading = document.getElementById('loading');
     const error = document.getElementById('error');
@@ -254,6 +227,15 @@ async function loadEarthquakes() {
             case 'month':
                 starttime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
                 break;
+            case '3months':
+                starttime = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+                break;
+            case '6months':
+                starttime = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString();
+                break;
+            case 'year':
+                starttime = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString();
+                break;
         }
 
         // URLパラメータを正しい形式で構築
@@ -261,8 +243,7 @@ async function loadEarthquakes() {
             format: 'geojson',
             starttime: starttime,
             endtime: endtime,
-            orderby: 'time',
-            limit: '100'
+            orderby: 'time'
         });
         
         if (minMagnitude > 0) {
@@ -298,9 +279,6 @@ async function loadEarthquakes() {
             displayEarthquakesList(earthquakeData);
             updateMap(earthquakeData);
         }
-
-        const stats = calculateStats(earthquakeData);
-        displayStats(stats);
 
     } catch (err) {
         if (error) {
@@ -395,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Content Loaded');
     
     // 必要な要素の存在確認
-    const requiredElements = ['map', 'earthquakeList', 'stats', 'loading', 'error', 'noData'];
+    const requiredElements = ['map', 'earthquakeList', 'loading', 'error', 'noData'];
     const missingElements = requiredElements.filter(id => !document.getElementById(id));
     
     if (missingElements.length > 0) {
