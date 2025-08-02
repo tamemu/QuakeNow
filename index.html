@@ -1,76 +1,631 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>地震速報</title>
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZJTgU0cbWo+Hq9pPd8Q63mBPkSJRnOcCjKZeY0uXJbE4XwGjVPzVvWfL0oB7dlQvRysM6vP5t2yN1iF0Ow==" crossorigin=""/>
-  <!-- Font Awesome CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuakeNow - 世界の地震情報</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <style>
-    /* カスタムスタイル (必要に応じて) */
-    .earthquake-card {
-      margin-bottom: 1rem;
-      border: 1px solid #deeplink;
-      border-radius: 0.25rem;
-    }
-    .earthquake-time {
-      font-size: 0.875rem;
-      color: #6c757d;
-    }
-    #map { height: 400px; } /* 地図の高さを設定 */
-  </style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .earthquake-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .earthquake-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .earthquake-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .magnitude {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .mag-mini { background: #28a745; }
+        .mag-minor { background: #ffc107; }
+        .mag-light { background: #fd7e14; }
+        .mag-moderate { background: #dc3545; }
+        .mag-strong { background: #6f42c1; }
+        .mag-major { background: #e83e8c; }
+        .mag-great { background: #dc3545; }
+
+        .earthquake-info h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            line-height: 1.4;
+            padding-right: 70px;
+        }
+
+        .earthquake-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 0.95rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .earthquake-time {
+            font-size: 0.9rem;
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .no-data h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .error {
+            background: #dc3545;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                min-width: auto;
+            }
+
+            .earthquake-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background: #ccc;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 21px;
+            height: 21px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(25px);
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <header class="header">
+            <h1>🌍 QuakeNow</h1>
+            <p>世界の地震情報をリアルタイムでお届け</p>
+        </header>
 
-  <div class="container mt-3">
-    <h1>地震速報</h1>
-
-    <!-- フィルタリング -->
-    <div class="mb-3">
-      <label for="magnitudeFilter" class="form-label">マグニチュード:</label>
-      <input type="number" id="magnitudeFilter" class="form-control" value="0">
-    </div>
-
-    <!-- 地図表示 -->
-    <div id="map" class="mb-3"></div>
-
-    <!-- 地震リスト -->
-    <div id="earthquake-list" class="row">
-      <!-- 地震情報がここに表示されます -->
-    </div>
-
-    <!-- モーダルウィンドウ -->
-    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="detailModalLabel">地震詳細</h5>
-          </div>
-          <div class="modal-body" id="detailContent">
-            <!-- 詳細情報がここに表示されます -->
-          </div>
+        <div class="controls">
+            <div class="control-row">
+                <div class="control-group">
+                    <label>期間</label>
+                    <select id="timeRange">
+                        <option value="day">過去24時間</option>
+                        <option value="week">過去1週間</option>
+                        <option value="month">過去1ヶ月</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>最小マグニチュード</label>
+                    <select id="minMagnitude">
+                        <option value="0">すべて</option>
+                        <option value="2.5">2.5以上</option>
+                        <option value="4.5" selected>4.5以上</option>
+                        <option value="6">6.0以上</option>
+                        <option value="7">7.0以上</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>地域</label>
+                    <select id="region">
+                        <option value="global">世界全体</option>
+                        <option value="japan">日本周辺</option>
+                        <option value="pacific">環太平洋</option>
+                        <option value="uswest">米国西海岸</option>
+                        <option value="mediterranean">地中海</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="loadEarthquakes()">更新</button>
+            </div>
+            <div class="auto-refresh">
+                <span>自動更新</span>
+                <div class="toggle-switch" id="autoRefreshToggle" onclick="toggleAutoRefresh()">
+                    <div class="toggle-slider"></div>
+                </div>
+                <span id="refreshStatus">オフ</span>
+            </div>
         </div>
-      </div>
+
+        <div class="stats" id="stats"></div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <div>地震情報を取得中...</div>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="earthquakeGrid" class="earthquake-grid"></div>
+
+        <div id="noData" class="no-data" style="display: none;">
+            <h3>データがありません</h3>
+            <p>指定された条件に該当する地震は見つかりませんでした</p>
+        </div>
     </div>
 
-  </div>
+    <script>
+        let autoRefreshInterval = null;
+        let earthquakeData = [];
 
-  <!-- Bootstrap JS (オプション) -->
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8tacXYojaMpxafNeT1CiabwpOX4N4dtgI6hGysnSOvWXRfF9rpC8D9sY3aJbDzrUvmRo2Rj1m0Kg==" crossorigin=""></script>
+        function getMagnitudeClass(magnitude) {
+            if (magnitude < 3) return 'mag-mini';
+            if (magnitude < 4) return 'mag-minor';
+            if (magnitude < 5) return 'mag-light';
+            if (magnitude < 6) return 'mag-moderate';
+            if (magnitude < 7) return 'mag-strong';
+            if (magnitude < 8) return 'mag-major';
+            return 'mag-great';
+        }
 
-  <!-- Font Awesome JS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+        function getMagnitudeLabel(magnitude) {
+            if (magnitude < 3) return 'Mini';
+            if (magnitude < 4) return 'Minor';
+            if (magnitude < 5) return 'Light';
+            if (magnitude < 6) return 'Moderate';
+            if (magnitude < 7) return 'Strong';
+            if (magnitude < 8) return 'Major';
+            return 'Great';
+        }
 
-  <!-- JavaScriptファイル -->
-  <script src="script.js"></script>
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 60) {
+                return `${minutes}分前`;
+            } else if (hours < 24) {
+                return `${hours}時間前`;
+            } else if (days < 7) {
+                return `${days}日前`;
+            } else {
+                return date.toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+
+        function getRegionParams(region) {
+            switch(region) {
+                case 'japan':
+                    return '&minlatitude=24&maxlatitude=46&minlongitude=123&maxlongitude=146';
+                case 'pacific':
+                    return '&minlatitude=-60&maxlatitude=60&minlongitude=120&maxlongitude=-60';
+                case 'uswest':
+                    return '&minlatitude=32&maxlatitude=49&minlongitude=-125&maxlongitude=-114';
+                case 'mediterranean':
+                    return '&minlatitude=30&maxlatitude=47&minlongitude=-6&maxlongitude=42';
+                default:
+                    return '';
+            }
+        }
+
+        function calculateStats(earthquakes) {
+            const total = earthquakes.length;
+            const avgMagnitude = total > 0 ? (earthquakes.reduce((sum, eq) => sum + eq.properties.mag, 0) / total).toFixed(1) : 0;
+            const maxMagnitude = total > 0 ? Math.max(...earthquakes.map(eq => eq.properties.mag)).toFixed(1) : 0;
+            const recentCount = earthquakes.filter(eq => Date.now() - eq.properties.time < 86400000).length;
+
+            return { total, avgMagnitude, maxMagnitude, recentCount };
+        }
+
+        function displayStats(stats) {
+            const statsContainer = document.getElementById('stats');
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total}</div>
+                    <div class="stat-label">総地震数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.maxMagnitude}</div>
+                    <div class="stat-label">最大マグニチュード</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.avgMagnitude}</div>
+                    <div class="stat-label">平均マグニチュード</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.recentCount}</div>
+                    <div class="stat-label">過去24時間</div>
+                </div>
+            `;
+        }
+
+        async function loadEarthquakes() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const grid = document.getElementById('earthquakeGrid');
+            const noData = document.getElementById('noData');
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            grid.innerHTML = '';
+            noData.style.display = 'none';
+
+            try {
+                const timeRange = document.getElementById('timeRange').value;
+                const minMagnitude = document.getElementById('minMagnitude').value;
+                const region = document.getElementById('region').value;
+
+                const endtime = new Date().toISOString().split('T')[0];
+                let starttime;
+                switch(timeRange) {
+                    case 'day':
+                        starttime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                        break;
+                    case 'week':
+                        starttime = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                        break;
+                    case 'month':
+                        starttime = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                        break;
+                }
+
+                const regionParams = getRegionParams(region);
+                const minMagParam = minMagnitude > 0 ? `&minmagnitude=${minMagnitude}` : '';
+                
+                const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${starttime}&endtime=${endtime}${minMagParam}${regionParams}&orderby=time-desc&limit=100`;
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTPエラー: ${response.status}`);
+                }
+
+                const data = await response.json();
+                earthquakeData = data.features;
+
+                if (earthquakeData.length === 0) {
+                    noData.style.display = 'block';
+                } else {
+                    displayEarthquakes(earthquakeData);
+                }
+
+                const stats = calculateStats(earthquakeData);
+                displayStats(stats);
+
+            } catch (err) {
+                error.textContent = `エラーが発生しました: ${err.message}`;
+                error.style.display = 'block';
+                console.error('地震データの取得に失敗:', err);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function displayEarthquakes(earthquakes) {
+            const grid = document.getElementById('earthquakeGrid');
+            
+            grid.innerHTML = earthquakes.map(earthquake => {
+                const props = earthquake.properties;
+                const coords = earthquake.geometry.coordinates;
+                const magnitude = props.mag;
+                const place = props.place || '不明な場所';
+                const time = props.time;
+                const depth = coords[2];
+                
+                return `
+                    <div class="earthquake-card">
+                        <div class="magnitude ${getMagnitudeClass(magnitude)}">
+                            ${magnitude.toFixed(1)}
+                        </div>
+                        <div class="earthquake-info">
+                            <h3>${place}</h3>
+                            <div class="earthquake-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">マグニチュード</span>
+                                    <span class="detail-value">M${magnitude.toFixed(1)} (${getMagnitudeLabel(magnitude)})</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">深さ</span>
+                                    <span class="detail-value">${depth.toFixed(1)} km</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">緯度</span>
+                                    <span class="detail-value">${coords[1].toFixed(3)}°</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">経度</span>
+                                    <span class="detail-value">${coords[0].toFixed(3)}°</span>
+                                </div>
+                            </div>
+                            <div class="earthquake-time">
+                                ${formatDate(time)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleAutoRefresh() {
+            const toggle = document.getElementById('autoRefreshToggle');
+            const status = document.getElementById('refreshStatus');
+            
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                toggle.classList.remove('active');
+                status.textContent = 'オフ';
+            } else {
+                autoRefreshInterval = setInterval(loadEarthquakes, 60000); // 1分ごと
+                toggle.classList.add('active');
+                status.textContent = 'オン (1分間隔)';
+            }
+        }
+
+        // 初回読み込み
+        loadEarthquakes();
+    </script>
 </body>
 </html>
