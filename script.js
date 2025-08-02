@@ -155,52 +155,6 @@ function selectEarthquake(earthquakeId) {
         }
     });
 }
-    switch(region) {
-        case 'japan':
-function getRegionBounds(region) {
-    switch(region) {
-        case 'japan':
-            return {
-                minlatitude: '24',
-                maxlatitude: '46', 
-                minlongitude: '123',
-                maxlongitude: '146'
-            };
-        case 'pacific':
-            return {
-                minlatitude: '-60',
-                maxlatitude: '60',
-                minlongitude: '120',
-                maxlongitude: '-60'
-            };
-        case 'uswest':
-            return {
-                minlatitude: '32',
-                maxlatitude: '49',
-                minlongitude: '-125',
-                maxlongitude: '-114'
-            };
-        case 'mediterranean':
-            return {
-                minlatitude: '30',
-                maxlatitude: '47',
-                minlongitude: '-6',
-                maxlongitude: '42'
-            };
-        default:
-            return null;
-    }
-}
-}
-
-function calculateStats(earthquakes) {
-    const total = earthquakes.length;
-    const avgMagnitude = total > 0 ? (earthquakes.reduce((sum, eq) => sum + eq.properties.mag, 0) / total).toFixed(1) : 0;
-    const maxMagnitude = total > 0 ? Math.max(...earthquakes.map(eq => eq.properties.mag)).toFixed(1) : 0;
-    const recentCount = earthquakes.filter(eq => Date.now() - eq.properties.time < 86400000).length;
-
-    return { total, avgMagnitude, maxMagnitude, recentCount };
-}
 
 async function loadEarthquakes() {
     const loading = document.getElementById('loading');
@@ -229,8 +183,8 @@ async function loadEarthquakes() {
     }
 
     try {
-        const timeRange = document.getElementById('timeRange').value;
-        const minMagnitude = document.getElementById('minMagnitude').value;
+        const timeRange = document.getElementById('timeRange')?.value || 'day';
+        const minMagnitude = document.getElementById('minMagnitude')?.value || '0';
 
         // USGSのAPIは現在時刻より未来の時刻を受け付けないため、現在時刻を使用
         const now = new Date();
@@ -256,6 +210,8 @@ async function loadEarthquakes() {
             case 'year':
                 starttime = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString();
                 break;
+            default:
+                starttime = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
         }
 
         // URLパラメータを正しい形式で構築
