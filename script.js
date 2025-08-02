@@ -1,5 +1,8 @@
 let autoRefreshInterval = null;
 let earthquakeData = [];
+let map = null;
+let markersLayer = null;
+let selectedEarthquakeId = null;
 
 function getMagnitudeClass(magnitude) {
     if (magnitude < 3) return 'mag-mini';
@@ -9,6 +12,20 @@ function getMagnitudeClass(magnitude) {
     if (magnitude < 7) return 'mag-strong';
     if (magnitude < 8) return 'mag-major';
     return 'mag-great';
+}
+
+function getMagnitudeColor(magnitude) {
+    if (magnitude < 3) return '#28a745';
+    if (magnitude < 4) return '#ffc107';
+    if (magnitude < 5) return '#fd7e14';
+    if (magnitude < 6) return '#dc3545';
+    if (magnitude < 7) return '#6f42c1';
+    if (magnitude < 8) return '#e83e8c';
+    return '#dc3545';
+}
+
+function getMagnitudeRadius(magnitude) {
+    return Math.max(4, magnitude * 3);
 }
 
 function getMagnitudeLabel(magnitude) {
@@ -46,6 +63,85 @@ function formatDate(timestamp) {
     }
 }
 
+function initializeMap() {
+    if (!map) {
+        map = L.map('map').setView([35.6762, 139.6503], 2);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        markersLayer = L.layerGroup().addTo(map);
+    }
+}
+
+function updateMap(earthquakes) {
+    if (!map) return;
+    
+    markersLayer.clearLayers();
+    
+    earthquakes.forEach((earthquake, index) => {
+        const props = earthquake.properties;
+        const coords = earthquake.geometry.coordinates;
+        const magnitude = props.mag;
+        const place = props.place || '不明な場所';
+        
+        const marker = L.circleMarker([coords[1], coords[0]], {
+            radius: getMagnitudeRadius(magnitude),
+            fillColor: getMagnitudeColor(magnitude),
+            color: '#fff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+        });
+        
+        const popupContent = `
+            <div style="min-width: 200px;">
+                <h3 style="margin: 0 0 10px 0; color: #333;">${place}</h3>
+                <p style="margin: 5px 0;"><strong>マグニチュード:</strong> M${magnitude.toFixed(1)}</p>
+                <p style="margin: 5px 0;"><strong>深さ:</strong> ${coords[2].toFixed(1)} km</p>
+                <p style="margin: 5px 0;"><strong>時刻:</strong> ${formatDate(props.time)}</p>
+                <p style="margin: 5px 0;"><strong>座標:</strong> ${coords[1].toFixed(3)}°, ${coords[0].toFixed(3)}°</p>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+        marker.earthquakeId = props.id || index;
+        
+        marker.on('click', function() {
+            selectEarthquake(this.earthquakeId);
+        });
+        
+        markersLayer.addLayer(marker);
+    });
+    
+    if (earthquakes.length > 0) {
+        const group = new L.featureGroup(markersLayer.getLayers());
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
+}
+
+function selectEarthquake(earthquakeId) {
+    selectedEarthquakeId = earthquakeId;
+    
+    // リストのアイテムを選択状態に
+    document.querySelectorAll('.earthquake-item').forEach(item => {
+        item.classList.remove('selected');
+        if (item.dataset.earthquakeId === earthquakeId.toString()) {
+            item.classList.add('selected');
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    });
+    
+    // マップ上の対応するマーカーのポップアップを開く
+    markersLayer.eachLayer(function(marker) {
+        if (marker.earthquakeId === earthquakeId) {
+            marker.openPopup();
+        }
+    });
+}
+    switch(region) {
+        case 'japan':
 function getRegionBounds(region) {
     switch(region) {
         case 'japan':
@@ -79,6 +175,7 @@ function getRegionBounds(region) {
         default:
             return null;
     }
+}
 }
 
 function calculateStats(earthquakes) {
@@ -184,7 +281,8 @@ async function loadEarthquakes() {
         if (earthquakeData.length === 0) {
             noData.style.display = 'block';
         } else {
-            displayEarthquakes(earthquakeData);
+            displayEarthquakesList(earthquakeData);
+            updateMap(earthquakeData);
         }
 
         const stats = calculateStats(earthquakeData);
@@ -199,49 +297,59 @@ async function loadEarthquakes() {
     }
 }
 
-function displayEarthquakes(earthquakes) {
-    const grid = document.getElementById('earthquakeGrid');
+function displayEarthquakesList(earthquakes) {
+    const list = document.getElementById('earthquakeList');
     
-    grid.innerHTML = earthquakes.map(earthquake => {
+    list.innerHTML = earthquakes.map((earthquake, index) => {
         const props = earthquake.properties;
         const coords = earthquake.geometry.coordinates;
         const magnitude = props.mag;
         const place = props.place || '不明な場所';
         const time = props.time;
         const depth = coords[2];
+        const earthquakeId = props.id || index;
         
         return `
-            <div class="earthquake-card">
-                <div class="magnitude ${getMagnitudeClass(magnitude)}">
-                    ${magnitude.toFixed(1)}
-                </div>
-                <div class="earthquake-info">
-                    <h3>${place}</h3>
-                    <div class="earthquake-details">
-                        <div class="detail-item">
-                            <span class="detail-label">マグニチュード</span>
-                            <span class="detail-value">M${magnitude.toFixed(1)} (${getMagnitudeLabel(magnitude)})</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">深さ</span>
-                            <span class="detail-value">${depth.toFixed(1)} km</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">緯度</span>
-                            <span class="detail-value">${coords[1].toFixed(3)}°</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">経度</span>
-                            <span class="detail-value">${coords[0].toFixed(3)}°</span>
-                        </div>
+            <div class="earthquake-item" data-earthquake-id="${earthquakeId}" onclick="selectEarthquake(${earthquakeId})">
+                <div class="item-header">
+                    <div class="item-magnitude ${getMagnitudeClass(magnitude)}">
+                        ${magnitude.toFixed(1)}
                     </div>
-                    <div class="earthquake-time">
-                        ${formatDate(time)}
+                    <div class="item-location">${place}</div>
+                    <div class="item-time">${formatDate(time)}</div>
+                </div>
+                <div class="item-details">
+                    <div class="item-detail">
+                        <span class="item-detail-label">深さ</span>
+                        <span class="item-detail-value">${depth.toFixed(1)} km</span>
+                    </div>
+                    <div class="item-detail">
+                        <span class="item-detail-label">緯度</span>
+                        <span class="item-detail-value">${coords[1].toFixed(3)}°</span>
+                    </div>
+                    <div class="item-detail">
+                        <span class="item-detail-label">経度</span>
+                        <span class="item-detail-value">${coords[0].toFixed(3)}°</span>
                     </div>
                 </div>
             </div>
         `;
     }).join('');
+}
+
+function sortEarthquakes(sortBy) {
+    if (!earthquakeData || earthquakeData.length === 0) return;
+    
+    const sortedData = [...earthquakeData];
+    
+    if (sortBy === 'magnitude') {
+        sortedData.sort((a, b) => b.properties.mag - a.properties.mag);
+    } else {
+        sortedData.sort((a, b) => b.properties.time - a.properties.time);
+    }
+    
+    displayEarthquakesList(sortedData);
+    updateMap(sortedData);
 }
 
 function toggleAutoRefresh() {
@@ -262,5 +370,19 @@ function toggleAutoRefresh() {
 
 // 初回読み込み
 document.addEventListener('DOMContentLoaded', function() {
+    initializeMap();
     loadEarthquakes();
+    
+    // ソートボタンのイベントリスナー
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // アクティブ状態を切り替え
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // ソート実行
+            const sortBy = this.dataset.sort;
+            sortEarthquakes(sortBy);
+        });
+    });
 });
