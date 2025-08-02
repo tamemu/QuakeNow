@@ -456,18 +456,38 @@
             }
         }
 
-        function getRegionParams(region) {
+        function getRegionBounds(region) {
             switch(region) {
                 case 'japan':
-                    return '&minlatitude=24&maxlatitude=46&minlongitude=123&maxlongitude=146';
+                    return {
+                        minlatitude: '24',
+                        maxlatitude: '46', 
+                        minlongitude: '123',
+                        maxlongitude: '146'
+                    };
                 case 'pacific':
-                    return '&minlatitude=-60&maxlatitude=60&minlongitude=120&maxlongitude=-60';
+                    return {
+                        minlatitude: '-60',
+                        maxlatitude: '60',
+                        minlongitude: '120',
+                        maxlongitude: '-60'
+                    };
                 case 'uswest':
-                    return '&minlatitude=32&maxlatitude=49&minlongitude=-125&maxlongitude=-114';
+                    return {
+                        minlatitude: '32',
+                        maxlatitude: '49',
+                        minlongitude: '-125',
+                        maxlongitude: '-114'
+                    };
                 case 'mediterranean':
-                    return '&minlatitude=30&maxlatitude=47&minlongitude=-6&maxlongitude=42';
+                    return {
+                        minlatitude: '30',
+                        maxlatitude: '47',
+                        minlongitude: '-6',
+                        maxlongitude: '42'
+                    };
                 default:
-                    return '';
+                    return null;
             }
         }
 
@@ -543,7 +563,7 @@
                     format: 'geojson',
                     starttime: starttime,
                     endtime: endtime,
-                    orderby: 'time-desc',
+                    orderby: 'time',
                     limit: '100'
                 });
                 
