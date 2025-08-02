@@ -207,6 +207,12 @@ async function loadEarthquakes() {
         list.innerHTML = '';
     }
 
+    // 統計カードが残っている場合は削除
+    const statsContainer = document.getElementById('stats');
+    if (statsContainer) {
+        statsContainer.remove();
+    }
+
     try {
         const timeRange = document.getElementById('timeRange').value;
         const minMagnitude = document.getElementById('minMagnitude').value;
